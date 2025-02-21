@@ -10,10 +10,11 @@ interface AppTextProps extends TextProps {
 const AppText: React.FC<AppTextProps> = ({ children, style, ...props }) => {
 	const [loaded, error] = useFonts({
 		'DINRoundPro-Bold': require('@/assets/fonts/din-round-bold.ttf'),
+		'DINRoundPro-Light': require('@/assets/fonts/din-round-light.ttf'),
 	});
 
 	if (!loaded) {
-		return <Text>Loading...</Text>; // Or a better loading indicator
+		return null;
 	}
 
 	return (

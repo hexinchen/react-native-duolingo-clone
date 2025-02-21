@@ -17,6 +17,7 @@ module.exports = {
 			},
 			fontFamily: {
 				'din-round-bold': 'din-round-bold',
+				'din-round-light': 'din-round-light',
 			},
 		},
 	},

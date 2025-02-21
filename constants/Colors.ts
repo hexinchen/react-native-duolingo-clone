@@ -7,6 +7,17 @@ import resolveConfig from 'tailwindcss/resolveConfig';
 import tailwindConfig from '../tailwind.config';
 import { DefaultColors } from 'tailwindcss/types/generated/colors';
 
+interface AppColors extends DefaultColors {
+	'owl-green': string;
+	'blue-jay': string;
+	swan: string;
+	macaw: string;
+	whale: string;
+	'black-text': string;
+	eel: string;
+	'tree-frog': string;
+}
+
 const fullConfig = resolveConfig(tailwindConfig);
 
-export const Colors = fullConfig.theme.colors as DefaultColors;
+export const Colors = fullConfig.theme.colors as AppColors;
