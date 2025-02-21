@@ -195,14 +195,41 @@ function QuizScreen() {
 				)
 			);
 			let currentData = [...flatListData];
-			const removeRowIndex = currentData.findIndex((item: ListItem) =>
-				item.words.map((word) => word.id).includes(wordId)
-			);
-			currentData[removeRowIndex].words = currentData[
-				removeRowIndex
-			].words.filter((word) => word.id !== wordId);
-			currentData[removeRowIndex].remainingWidth += deselectedWord.buttonWidth;
-			setFlatListData([...currentData]);
+			let flattenedWords: Word[] = currentData.reduce<Word[]>((acc, item) => {
+				return [...acc, ...item.words];
+			}, []);
+			flattenedWords = flattenedWords.filter((word) => word.id !== wordId);
+			const newDataList: ListItem[] = [];
+			for (let i = 0; i < rowCount; i++) {
+				const newWords: Word[] = [];
+				let currentRemainingWidth = singleDividerWidth;
+				let wordToInsert = flattenedWords.shift();
+				console.log('word to insert: ', wordToInsert);
+
+				while (
+					wordToInsert !== undefined &&
+					currentRemainingWidth > wordToInsert.buttonWidth
+				) {
+					newWords.push(wordToInsert);
+					currentRemainingWidth -= wordToInsert.buttonWidth;
+					wordToInsert = flattenedWords.shift();
+				}
+
+				if (
+					wordToInsert !== undefined &&
+					currentRemainingWidth < wordToInsert?.buttonWidth
+				) {
+					flattenedWords.unshift(wordToInsert);
+				}
+
+				newDataList.push({
+					id: i.toString(),
+					words: [...newWords],
+					remainingWidth: currentRemainingWidth,
+				});
+				console.log('new data list: ', newDataList);
+			}
+			setFlatListData([...newDataList]);
 		}
 	}
 
