@@ -11,4 +11,4 @@ declare module 'react-native-actions-sheet' {
 	}
 }
 
-export {};
+export default {};

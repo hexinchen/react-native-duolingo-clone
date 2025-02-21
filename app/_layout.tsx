@@ -9,6 +9,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { StyleSheet, Text } from 'react-native';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -18,9 +19,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-	const colorScheme = useColorScheme();
-	const [loaded] = useFonts({
-		SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+	const [loaded, error] = useFonts({
+		'DINRoundPro-Bold': require('../assets/fonts/din-round-bold.ttf'),
 	});
 
 	useEffect(() => {
@@ -29,7 +29,7 @@ export default function RootLayout() {
 		}
 	}, [loaded]);
 
-	if (!loaded) {
+	if (!loaded && !error) {
 		return null;
 	}
 
@@ -39,8 +39,9 @@ export default function RootLayout() {
 				<Stack>
 					<Stack.Screen name='(tabs)' options={{ headerShown: false }} />
 					<Stack.Screen name='+not-found' />
+					<Stack.Screen name='quiz' options={{ headerShown: false }} />
 				</Stack>
-				<StatusBar style='auto' />
+				<StatusBar style='dark' />
 			</SafeAreaProvider>
 		</ThemeProvider>
 	);

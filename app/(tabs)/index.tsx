@@ -1,38 +1,20 @@
-import { Image, StyleSheet, Platform, View, Text } from 'react-native';
+import { View } from 'react-native';
+import { Link } from 'expo-router';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import '@/global.css';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AppText from '../components/AppText';
+import QuizScreen from '@/app/quiz';
 
 export default function HomeScreen() {
 	return (
-		<SafeAreaView>
+		<SafeAreaView className='bg-owl-green h-screen flex flex-col justify-center items-center'>
 			<View>
-				<Text>hello</Text>
+				<Link href='/quiz'>
+					<AppText className='text-lg'>Start Quiz</AppText>
+				</Link>
 			</View>
 		</SafeAreaView>
 	);
 }
-
-const styles = StyleSheet.create({
-	titleContainer: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-	},
-	stepContainer: {
-		gap: 8,
-		marginBottom: 8,
-	},
-	reactLogo: {
-		height: 178,
-		width: 290,
-		bottom: 0,
-		left: 0,
-		position: 'absolute',
-	},
-});

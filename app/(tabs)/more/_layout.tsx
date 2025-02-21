@@ -1,11 +1,17 @@
-import { Tabs } from 'expo-router';
+import { HapticTab } from '@/components/HapticTab';
+import { BlurView } from 'expo-blur';
+import { Stack, Tabs } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 
 export default function MoreTabsLayout() {
 	return (
-		<Tabs
+		<Stack
 			screenOptions={{
 				headerShown: false,
 			}}
-		></Tabs>
+		>
+			<Stack.Screen name='feed' />
+			<Stack.Screen name='profile' />
+		</Stack>
 	);
 }

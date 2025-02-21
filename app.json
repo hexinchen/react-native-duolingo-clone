@@ -1,6 +1,9 @@
 {
   "expo": {
     "name": "MyDuolingo",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "slug": "MyDuolingo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,6 +26,14 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/nunito-sans.ttf"
+          ]
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",

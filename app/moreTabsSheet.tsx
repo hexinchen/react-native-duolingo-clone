@@ -12,12 +12,14 @@ import {
 	useRouter,
 	Link,
 } from 'expo-router';
+import BellIcon from '@/assets/icons/bell.svg';
+import ProfileIcon from '@/assets/icons/profile.svg';
+import AppText from './components/AppText';
 
 type ItemProps = { title: string; icon: React.JSX.Element; router: Router };
 
 function Item({ title, icon, router }: ItemProps) {
 	function handlePress() {
-		console.log('Navigating to:', '/' + title);
 		router.push(('/more/' + title.toLowerCase()) as Href);
 		SheetManager.hide('more-tabs-sheet');
 	}
@@ -29,7 +31,7 @@ function Item({ title, icon, router }: ItemProps) {
 				onPress={handlePress}
 			>
 				<View>{icon}</View>
-				<Text className='font-bold text-lg'>{title}</Text>
+				<AppText className='font-bold text-lg'>{title}</AppText>
 			</Pressable>
 			<View
 				style={{
@@ -41,17 +43,17 @@ function Item({ title, icon, router }: ItemProps) {
 	);
 }
 
-function createData(color: string) {
+function createData() {
 	return [
 		{
 			id: 'bd7acbea-c1b1-46c2-aed5-3ad53abb28ba',
 			title: 'Feed',
-			icon: <Entypo name='notification' size={28} color={color} />,
+			icon: <BellIcon width={32} height={32} />,
 		},
 		{
 			id: '3ac68afc-c605-48d3-a4f8-fbd91aa97f63',
 			title: 'Profile',
-			icon: <MaterialIcons name='account-circle' size={28} color={color} />,
+			icon: <ProfileIcon width={32} height={32} />,
 		},
 	];
 }
@@ -62,7 +64,7 @@ function MoreTabsSheet() {
 	return (
 		<ActionSheet>
 			<FlatList
-				data={createData(Colors['light'].tint)}
+				data={createData()}
 				renderItem={({ item }) => (
 					<Item title={item.title} icon={item.icon} router={router} />
 				)}
