@@ -13,7 +13,7 @@ import ActionSheet, {
 	SheetManager,
 	SheetProvider,
 } from 'react-native-actions-sheet';
-import '@/app/sheets';
+
 import HomeIcon from '@/assets/icons/home.svg';
 import QuestIcon from '@/assets/icons/quest.svg';
 import ExerciseIcon from '@/assets/icons/exercise.svg';
@@ -28,6 +28,7 @@ import Animated, {
 	withSpring,
 	withTiming,
 } from 'react-native-reanimated';
+import '@/components/sheets';
 
 export default function TabLayout() {
 	const styles = createStyles();

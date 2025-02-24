@@ -14,7 +14,7 @@ import {
 } from 'expo-router';
 import BellIcon from '@/assets/icons/bell.svg';
 import ProfileIcon from '@/assets/icons/profile.svg';
-import AppText from './components/AppText';
+import AppText from './AppText';
 
 type ItemProps = { title: string; icon: React.JSX.Element; router: Router };
 

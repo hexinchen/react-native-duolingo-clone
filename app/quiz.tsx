@@ -10,12 +10,13 @@ import {
 	Dimensions,
 	ScaledSize,
 	FlatList,
+	LayoutAnimation,
 } from 'react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import CloseIcon from '@/assets/icons/close.svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Router, useRouter } from 'expo-router';
-import AppText from './components/AppText';
+import AppText from '../components/AppText';
 import LottieView from 'lottie-react-native';
 import { Colors } from '@/constants/Colors';
 import 'react-native-get-random-values';
@@ -24,19 +25,22 @@ import { twMerge } from 'tailwind-merge';
 import { Layout } from '@lottiefiles/dotlottie-react';
 import { useFonts } from 'expo-font';
 import { debounce, List } from 'lodash';
-
-interface Word {
-	id: string;
-	selected: boolean;
-	displayText: string;
-	buttonWidth: number;
-}
-
-interface ListItem {
-	words: Word[];
-	id: string;
-	remainingWidth: number;
-}
+import { remToPx } from '@/utils/utils';
+import { QuestionSegment, Word, Row } from '@/interfaces/quiz';
+import { quizzes } from '@/data/quizData';
+import Animated, {
+	Easing,
+	FadeIn,
+	FadeOut,
+	LinearTransition,
+	SlideOutDown,
+	useAnimatedStyle,
+	useSharedValue,
+	withSpring,
+	withTiming,
+} from 'react-native-reanimated';
+import { SheetManager, SheetProvider } from 'react-native-actions-sheet';
+import '@/components/sheets';
 
 function QuizScreen() {
 	const [loaded, error] = useFonts({
@@ -46,34 +50,12 @@ function QuizScreen() {
 	if (!loaded && !error) {
 		return null;
 	}
-
+	const [index, setIndex] = useState(0);
+	const translateX = useSharedValue(0);
 	const router: Router = useRouter();
-	const question: string[] = [
-		'Hallo',
-		', ',
-		' ',
-		'kommst',
-		' ',
-		'du',
-		' ',
-		'aus',
-		' ',
-		'Frankreich',
-		'?',
-	];
+	const horizonalPaddingRem = 1.25;
 	const [choiceBank, setChoiceBank] = useState<Word[]>(
-		[
-			'the',
-			'from',
-			'Hello',
-			'Nina',
-			'France',
-			'brother',
-			'do',
-			'come',
-			'smart',
-			'you',
-		].map((word) => ({
+		quizzes[index].choiceBank.map((word) => ({
 			selected: false,
 			displayText: word,
 			id: nanoid(),
@@ -89,13 +71,19 @@ function QuizScreen() {
 			: 1
 	);
 
-	const [flatListData, setFlatListData] = useState<ListItem[]>([]);
+	const [rowsData, setRowsData] = useState<Row[]>([]);
 	const [singleDividerWidth, setSingleDividerWidth] = useState(
-		Dimensions.get('window').width
+		Platform.OS === 'web'
+			? Dimensions.get('window').width
+			: Dimensions.get('window').width - 2 * remToPx(horizonalPaddingRem)
 	);
 
 	const debouncedHandleWindowChange = debounce((window: ScaledSize) => {
-		setSingleDividerWidth(window.width);
+		setSingleDividerWidth(
+			Platform.OS === 'web'
+				? Dimensions.get('window').width
+				: Dimensions.get('window').width - 2 * remToPx(horizonalPaddingRem)
+		);
 		setRowCount(window.width < 390 ? 3 : window.width < 598 ? 2 : 1);
 	}, 700);
 
@@ -116,40 +104,31 @@ function QuizScreen() {
 	}, []);
 
 	useEffect(() => {
-		const newDataList: ListItem[] = [];
-		console.log('single divider width: ', singleDividerWidth);
+		const rowsData: Row[] = [];
 		for (let i = 0; i < rowCount; i++) {
-			newDataList.push({
+			rowsData.push({
 				id: i.toString(),
 				words: [],
 				remainingWidth: singleDividerWidth,
+				isWidthLocked: false,
 			});
 		}
-		setFlatListData([...newDataList]);
+		setRowsData([...rowsData]);
 	}, [rowCount]);
 
-	const questionElement: React.JSX.Element[] = question.map((word) => (
-		<AppText
-			key={nanoid()}
-			className='text-eel text-2xl my-2'
-			style={styles.wordButtonText}
-		>
-			{word}
-		</AppText>
-	));
-
-	const selectedWordsElement: React.JSX.Element[] = choiceBank.map((word) => (
-		<Pressable
-			key={word.id}
-			className={twMerge('border-2 border-b-4 border-swan rounded-2xl p-2 m-2')}
-		>
-			<AppText className={twMerge('text-2xl', 'text-eel')}>
-				{word.displayText}
+	const questionElement: React.JSX.Element[] = quizzes[index].question.map(
+		(word) => (
+			<AppText
+				key={nanoid()}
+				className='text-eel text-2xl my-2'
+				style={styles.wordButtonText}
+			>
+				{word.display}
 			</AppText>
-		</Pressable>
-	));
+		)
+	);
 
-	function handleChoiceButtonLayout(event: LayoutChangeEvent, id: string) {
+	function setButtonWidth(event: LayoutChangeEvent, id: string): void {
 		const width: number = event.nativeEvent?.layout.width;
 
 		if (width > 0) {
@@ -162,16 +141,14 @@ function QuizScreen() {
 			);
 		}
 	}
-	const wordButtonClasses = 'border-2 border-b-4 border-swan rounded-2xl p-2';
+
 	const choiceBankElement: React.JSX.Element[] = choiceBank.map((word) => (
 		<Pressable
 			key={word.id}
-			onLayout={(event: LayoutChangeEvent) =>
-				handleChoiceButtonLayout(event, word.id)
-			}
+			onLayout={(event: LayoutChangeEvent) => setButtonWidth(event, word.id)}
 			disabled={word.selected}
 			className={twMerge(wordButtonClasses, 'm-2', word.selected && 'bg-swan')}
-			onPress={() => onWordChoicePress(word.id)}
+			onPress={() => onWordSelect(word.id)}
 		>
 			<AppText
 				className={twMerge(
@@ -194,21 +171,24 @@ function QuizScreen() {
 					word.id === wordId ? { ...word, selected: false } : word
 				)
 			);
-			let currentData = [...flatListData];
+			let currentData = [...rowsData];
 			let flattenedWords: Word[] = currentData.reduce<Word[]>((acc, item) => {
 				return [...acc, ...item.words];
 			}, []);
 			flattenedWords = flattenedWords.filter((word) => word.id !== wordId);
-			const newDataList: ListItem[] = [];
+			const newRowsData: Row[] = [];
+
 			for (let i = 0; i < rowCount; i++) {
 				const newWords: Word[] = [];
 				let currentRemainingWidth = singleDividerWidth;
+				let currentIsWidthLocked = false;
 				let wordToInsert = flattenedWords.shift();
 				console.log('word to insert: ', wordToInsert);
 
 				while (
 					wordToInsert !== undefined &&
-					currentRemainingWidth > wordToInsert.buttonWidth
+					currentRemainingWidth > wordToInsert.buttonWidth &&
+					!currentIsWidthLocked
 				) {
 					newWords.push(wordToInsert);
 					currentRemainingWidth -= wordToInsert.buttonWidth;
@@ -219,21 +199,24 @@ function QuizScreen() {
 					wordToInsert !== undefined &&
 					currentRemainingWidth < wordToInsert?.buttonWidth
 				) {
+					//这行不够放，留到下一行
 					flattenedWords.unshift(wordToInsert);
+					currentIsWidthLocked = true;
 				}
 
-				newDataList.push({
+				newRowsData.push({
 					id: i.toString(),
 					words: [...newWords],
 					remainingWidth: currentRemainingWidth,
+					isWidthLocked: currentIsWidthLocked,
 				});
-				console.log('new data list: ', newDataList);
+				console.log('new data list: ', newRowsData);
 			}
-			setFlatListData([...newDataList]);
+			setRowsData([...newRowsData]);
 		}
 	}
 
-	function onWordChoicePress(id: string) {
+	function onWordSelect(id: string): void {
 		const selectedWord = choiceBank.find((word) => word.id === id);
 
 		if (selectedWord) {
@@ -244,19 +227,21 @@ function QuizScreen() {
 			);
 
 			//往flatlist里塞
-			const currentData = [...flatListData];
+			const currentData = [...rowsData];
 			const insertRowIndex = currentData.findIndex(
-				(item: ListItem) => item.remainingWidth > selectedWord.buttonWidth
+				(item: Row) =>
+					item.remainingWidth > selectedWord.buttonWidth && !item.isWidthLocked
 			);
+
 			currentData[insertRowIndex].words.push(selectedWord);
 			currentData[insertRowIndex].remainingWidth -= selectedWord.buttonWidth;
-			setFlatListData([...currentData]);
+			setRowsData([...currentData]);
 		}
 	}
 
-	function renderListItem(item: ListItem) {
+	function renderRow(item: Row): React.JSX.Element {
 		return (
-			<View className='flex flex-row border-b-2 border-swan h-16'>
+			<View className='flex flex-row border-b-2 border-swan h-16 px-'>
 				{item.words.length > 0 &&
 					item.words.map((word: Word) => (
 						<Pressable
@@ -273,55 +258,108 @@ function QuizScreen() {
 		);
 	}
 
+	function checkAnswer(): boolean {
+		const flattenedWords: string[] = rowsData.reduce<string[]>((acc, item) => {
+			return [
+				...acc,
+				...item.words.map((word) => word?.displayText.toLowerCase()),
+			];
+		}, []);
+		const result: boolean = flattenedWords.every(
+			(word, i) => word === quizzes[index].answer[i].toLowerCase()
+		);
+
+		return result;
+	}
+
+	function onCheckPress(e: any): void {
+		e.preventDefault();
+		const isCorrect = checkAnswer();
+		console.log('is correct: ', isCorrect);
+
+		// if (index < quizzes.length - 1) {
+		// 	translateX.value = 1000;
+		// 	translateX.value = withTiming(0, { duration: 500 });
+		// 	setIndex((prev) => prev + 1);
+		// 	setChoiceBank(
+		// 		quizzes[index].choiceBank.map((word) => ({
+		// 			selected: false,
+		// 			displayText: word,
+		// 			id: nanoid(),
+		// 			buttonWidth: 0,
+		// 		}))
+		// 	);
+		// }
+	}
+
 	return (
-		<SafeAreaView className='bg-white h-full flex flex-col justify-between px-5'>
-			<Pressable className='p-1' onPress={() => router.push('/')}>
-				<CloseIcon width={28} height={28} />
-			</Pressable>
-			<AppText className='font-bold text-3xl'>Translate this sentence</AppText>
-			<View className='flex flex-row justify-start flex-wrap'>
-				{/* Section: Question line */}
-				<Pressable
-					className='bg-macaw h-10 w-10 p-1 mr-2 flex justify-center items-center border-transparent border-2 rounded-xl'
-					style={styles.speakerIconButton}
-				>
-					<LottieView
-						autoPlay
-						loop={false}
-						style={{
-							width: 32,
-							height: 32,
-							backgroundColor: 'transparent',
-						}}
-						source={require('@/assets/lotties/animatedSpeaker.json')}
-					/>
-				</Pressable>
-				{questionElement}
-			</View>
-
-			<View className='flex flex-col'>
-				<FlatList
-					data={flatListData}
-					renderItem={({ item }) => renderListItem(item)}
-					keyExtractor={(item) => item.id}
-				/>
-			</View>
-
-			<View className='flex flex-row flex-wrap justify-center'>
-				{/* Section: word choices */}
-				{choiceBankElement}
-			</View>
-			<Pressable
-				className='bg-owl-green flex flex-row justify-center items-center rounded-3xl h-fit p-4'
-				style={styles.checkButton}
+		<SafeAreaView className='h-full bg-white'>
+			<Animated.View
+				// className='px-[1.25rem]'
+				className={twMerge(`px-[${horizonalPaddingRem}rem]`)}
+				style={[
+					useAnimatedStyle(() => ({
+						transform: [{ translateX: translateX.value }],
+					})),
+					{ ...styles.container },
+				]}
 			>
-				<AppText className='text-white text-2xl'>CHECK</AppText>
-			</Pressable>
+				<Pressable className='p-1' onPress={() => router.push('/')}>
+					<CloseIcon width={28} height={28} />
+				</Pressable>
+				<AppText className='font-bold text-3xl'>
+					Translate this sentence
+				</AppText>
+				<View className='flex flex-row justify-start flex-wrap'>
+					{/* Section: Question line */}
+					<Pressable
+						className='bg-macaw h-10 w-10 p-1 mr-2 flex justify-center items-center border-transparent border-2 rounded-xl'
+						style={styles.speakerIconButton}
+					>
+						<LottieView
+							autoPlay
+							loop={false}
+							style={{
+								width: 32,
+								height: 32,
+								backgroundColor: 'transparent',
+							}}
+							source={require('@/assets/lotties/animatedSpeaker.json')}
+						/>
+					</Pressable>
+
+					{questionElement}
+				</View>
+
+				<View className='flex flex-col'>
+					<FlatList
+						data={rowsData}
+						renderItem={({ item }) => renderRow(item)}
+						keyExtractor={(item) => item.id}
+					/>
+				</View>
+
+				<View className='flex flex-row flex-wrap justify-center'>
+					{/* Section: word choices */}
+					{choiceBankElement}
+				</View>
+				<Pressable
+					className='bg-owl-green flex flex-row justify-center items-center rounded-3xl h-fit p-4'
+					style={styles.checkButton}
+					onPress={onCheckPress}
+				>
+					<AppText className='text-white text-2xl'>CHECK</AppText>
+				</Pressable>
+			</Animated.View>
 		</SafeAreaView>
 	);
 }
 
 const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		justifyContent: 'space-between',
+	},
 	speakerIconButton: {
 		shadowColor: Colors.whale, // Shadow color
 		shadowOffset: { width: 0, height: 5 }, // Shadow offset (x, y)
@@ -338,5 +376,7 @@ const styles = StyleSheet.create({
 		fontFamily: 'DINRoundPro-Light',
 	},
 });
+
+const wordButtonClasses = 'border-2 border-b-4 border-swan rounded-2xl p-2';
 
 export default QuizScreen;

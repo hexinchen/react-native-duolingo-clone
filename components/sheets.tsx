@@ -1,13 +1,14 @@
 import { registerSheet, SheetDefinition } from 'react-native-actions-sheet';
-import MoreTabsSheet from '@/app/moreTabsSheet';
+import MoreTabsSheet from '@/components/moreTabsSheet';
+import QuizResultSheet from '@/components/quizResultSheet';
 
 registerSheet('more-tabs-sheet', MoreTabsSheet);
+registerSheet('quiz-result-sheet', QuizResultSheet);
 
-// We extend some of the types here to give us great intellisense
-// across the app for all registered sheets.
 declare module 'react-native-actions-sheet' {
 	interface Sheets {
 		'more-tabs-sheet': SheetDefinition;
+		'quiz-result-sheet': SheetDefinition;
 	}
 }
 
