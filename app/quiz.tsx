@@ -122,7 +122,7 @@ function QuizScreen() {
 			});
 		}
 		setRowsData([...rowsData]);
-	}, [rowCount]);
+	}, [rowCount, index]);
 
 	const questionElement: React.JSX.Element[] = quizzes[index].question.map(
 		(word) => (
@@ -296,9 +296,10 @@ function QuizScreen() {
 
 	function onContinuePress(): void {
 		if (index < quizzes.length - 1) {
-			translateX.value = 1000;
+			translateX.value = 1000; //Sliding animation for the next quiz
 			translateX.value = withTiming(0, { duration: 500 });
 			setIndex((prev) => prev + 1);
+			setRowsData([]);
 			setChoiceBank(
 				quizzes[index].choiceBank.map((word) => ({
 					selected: false,
