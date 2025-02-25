@@ -11,8 +11,15 @@ import {
 	ScaledSize,
 	FlatList,
 	LayoutAnimation,
+	Button,
 } from 'react-native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import CloseIcon from '@/assets/icons/close.svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Router, useRouter } from 'expo-router';
@@ -39,8 +46,7 @@ import Animated, {
 	withSpring,
 	withTiming,
 } from 'react-native-reanimated';
-import { SheetManager, SheetProvider } from 'react-native-actions-sheet';
-import '@/components/sheets';
+import { BottomSheet } from '@/components/BottomSheet';
 
 function QuizScreen() {
 	const [loaded, error] = useFonts({
@@ -50,8 +56,10 @@ function QuizScreen() {
 	if (!loaded && !error) {
 		return null;
 	}
-	const [index, setIndex] = useState(0);
+	const isResultSheetOpen = useSharedValue(false);
 	const translateX = useSharedValue(0);
+	const [index, setIndex] = useState(0);
+	const [isCorrect, setIsCorrect] = useState(false);
 	const router: Router = useRouter();
 	const horizonalPaddingRem = 1.25;
 	const [choiceBank, setChoiceBank] = useState<Word[]>(
@@ -265,35 +273,46 @@ function QuizScreen() {
 				...item.words.map((word) => word?.displayText.toLowerCase()),
 			];
 		}, []);
+
+		if (flattenedWords.length === 0) {
+			return false;
+		}
+
 		const result: boolean = flattenedWords.every(
 			(word, i) => word === quizzes[index].answer[i].toLowerCase()
 		);
+		console.log('result : ', result);
 
 		return result;
 	}
 
 	function onCheckPress(e: any): void {
-		e.preventDefault();
 		const isCorrect = checkAnswer();
-		console.log('is correct: ', isCorrect);
 
-		// if (index < quizzes.length - 1) {
-		// 	translateX.value = 1000;
-		// 	translateX.value = withTiming(0, { duration: 500 });
-		// 	setIndex((prev) => prev + 1);
-		// 	setChoiceBank(
-		// 		quizzes[index].choiceBank.map((word) => ({
-		// 			selected: false,
-		// 			displayText: word,
-		// 			id: nanoid(),
-		// 			buttonWidth: 0,
-		// 		}))
-		// 	);
-		// }
+		setIsCorrect(isCorrect);
+
+		isResultSheetOpen.value = true;
+	}
+
+	function onContinuePress(): void {
+		if (index < quizzes.length - 1) {
+			translateX.value = 1000;
+			translateX.value = withTiming(0, { duration: 500 });
+			setIndex((prev) => prev + 1);
+			setChoiceBank(
+				quizzes[index].choiceBank.map((word) => ({
+					selected: false,
+					displayText: word,
+					id: nanoid(),
+					buttonWidth: 0,
+				}))
+			);
+			isResultSheetOpen.value = false;
+		}
 	}
 
 	return (
-		<SafeAreaView className='h-full bg-white'>
+		<SafeAreaView className='flex-1 bg-white'>
 			<Animated.View
 				// className='px-[1.25rem]'
 				className={twMerge(`px-[${horizonalPaddingRem}rem]`)}
@@ -345,12 +364,49 @@ function QuizScreen() {
 				</View>
 				<Pressable
 					className='bg-owl-green flex flex-row justify-center items-center rounded-3xl h-fit p-4'
-					style={styles.checkButton}
+					style={[styles.checkButtonShadow, styles.greenShadow]}
 					onPress={onCheckPress}
 				>
 					<AppText className='text-white text-2xl'>CHECK</AppText>
 				</Pressable>
 			</Animated.View>
+			<BottomSheet
+				isOpen={isResultSheetOpen}
+				style={[
+					styles.resultBottomSheet,
+					isCorrect ? styles.correctBottomSheet : styles.incorrectBottomSheet,
+				]}
+			>
+				<AppText
+					className={twMerge(
+						'text-3xl',
+						isCorrect ? 'text-owl-green' : 'text-cardinal'
+					)}
+				>
+					{isCorrect ? 'Awesome!' : 'Correct solution: '}
+				</AppText>
+				<AppText
+					className={twMerge(
+						'text-lg',
+						isCorrect ? 'text-owl-green' : 'text-cardinal'
+					)}
+				>
+					Meaning: Yes, Canada is great!{' '}
+				</AppText>
+				<Pressable
+					className={twMerge(
+						' flex flex-row justify-center items-center rounded-3xl h-fit p-4 self-stretch',
+						isCorrect ? 'bg-owl-green' : 'bg-cardinal'
+					)}
+					style={[
+						styles.checkButtonShadow,
+						isCorrect ? styles.greenShadow : styles.redShadow,
+					]}
+					onPress={onContinuePress}
+				>
+					<AppText className='text-white text-2xl'>CONTINUE</AppText>
+				</Pressable>
+			</BottomSheet>
 		</SafeAreaView>
 	);
 }
@@ -360,20 +416,38 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: 'space-between',
 	},
+
 	speakerIconButton: {
 		shadowColor: Colors.whale, // Shadow color
 		shadowOffset: { width: 0, height: 5 }, // Shadow offset (x, y)
 		shadowOpacity: 1, // Shadow opacity
 		shadowRadius: 0,
 	},
-	checkButton: {
-		shadowColor: Colors['tree-frog'], // Shadow color
+	checkButtonShadow: {
 		shadowOffset: { width: 0, height: 5 }, // Shadow offset (x, y)
 		shadowOpacity: 1, // Shadow opacity
 		shadowRadius: 0,
 	},
+	greenShadow: {
+		shadowColor: Colors['tree-frog'], // Shadow color
+	},
+	redShadow: {
+		shadowColor: Colors['fire-ant'],
+	},
 	wordButtonText: {
 		fontFamily: 'DINRoundPro-Light',
+	},
+	resultBottomSheet: {
+		paddingVertical: 25,
+
+		alignItems: 'flex-start',
+		gap: 20,
+	},
+	correctBottomSheet: {
+		backgroundColor: Colors['sea-sponge'],
+	},
+	incorrectBottomSheet: {
+		backgroundColor: Colors['walking-fish'],
 	},
 });
 

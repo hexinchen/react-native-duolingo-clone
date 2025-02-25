@@ -14,6 +14,10 @@ module.exports = {
 				'black-text': 'rgb(60, 60, 60)',
 				eel: 'rgb(75, 75, 75)',
 				'tree-frog': 'rgb(88, 167, 0)',
+				'sea-sponge': 'rgb(215, 255, 184)',
+				'walking-fish': 'rgb(255, 223, 224)',
+				'fire-ant': 'rgb(234, 43, 43)',
+				cardinal: 'rgb(255, 75, 75)',
 			},
 			fontFamily: {
 				'din-round-bold': 'din-round-bold',
