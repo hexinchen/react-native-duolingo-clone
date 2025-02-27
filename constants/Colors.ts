@@ -16,6 +16,10 @@ interface AppColors extends DefaultColors {
 	'black-text': string;
 	eel: string;
 	'tree-frog': string;
+	'sea-sponge': string;
+	'walking-fish': string;
+	'fire-ant': string;
+	cardinal: string;
 }
 
 const fullConfig = resolveConfig(tailwindConfig);

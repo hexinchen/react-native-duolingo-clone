@@ -21,6 +21,7 @@ interface QuestionSegment {
 interface Quiz {
 	question: QuestionSegment[];
 	answer: string[];
+	answerString: string;
 	choiceBank: string[];
 }
 

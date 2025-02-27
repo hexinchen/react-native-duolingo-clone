@@ -18,7 +18,7 @@ import Animated, {
 
 interface BottomSheetProps {
 	isOpen: SharedValue<boolean>;
-	toggleSheet: () => void;
+	toggleSheet?: () => void;
 	duration?: number;
 	style?: any;
 	children: ReactNode;

@@ -47,8 +47,10 @@ import Animated, {
 	withTiming,
 } from 'react-native-reanimated';
 import { BottomSheet } from '@/components/BottomSheet';
+import { Audio } from 'expo-av';
 
 function QuizScreen() {
+	const [sounds, setSounds] = useState<{ [key: string]: Audio.Sound }>({});
 	const [loaded, error] = useFonts({
 		'DINRoundPro-Light': require('@/assets/fonts/din-round-light.ttf'),
 	});
@@ -95,6 +97,21 @@ function QuizScreen() {
 		setRowCount(window.width < 390 ? 3 : window.width < 598 ? 2 : 1);
 	}, 700);
 
+	async function loadSounds() {
+		const soundFiles = {
+			correct: require('@/assets/sounds/correct.mp3'),
+			incorrect: require('@/assets/sounds/incorrect.mp3'),
+		};
+		const loadedSounds: { [key: string]: Audio.Sound } = {};
+
+		for (const [key, soundFile] of Object.entries(soundFiles)) {
+			const { sound } = await Audio.Sound.createAsync(soundFile);
+			loadedSounds[key] = sound;
+		}
+
+		setSounds(loadedSounds);
+	}
+
 	useEffect(() => {
 		const handleWindowSizeChange = ({ window }: { window: ScaledSize }) => {
 			debouncedHandleWindowChange(window);
@@ -112,6 +129,7 @@ function QuizScreen() {
 	}, []);
 
 	useEffect(() => {
+		console.log('index: ', index);
 		const rowsData: Row[] = [];
 		for (let i = 0; i < rowCount; i++) {
 			rowsData.push({
@@ -122,7 +140,18 @@ function QuizScreen() {
 			});
 		}
 		setRowsData([...rowsData]);
+		setChoiceBank(
+			quizzes[index].choiceBank.map((word) => ({
+				selected: false,
+				displayText: word,
+				id: nanoid(),
+				buttonWidth: 0,
+			}))
+		);
+		setIsCorrect(false);
 	}, [rowCount, index]);
+
+	// loadSounds();
 
 	const questionElement: React.JSX.Element[] = quizzes[index].question.map(
 		(word) => (
@@ -278,38 +307,36 @@ function QuizScreen() {
 			return false;
 		}
 
-		const result: boolean = flattenedWords.every(
-			(word, i) => word === quizzes[index].answer[i].toLowerCase()
-		);
+		const result: boolean =
+			flattenedWords.length === quizzes[index].answer.length &&
+			quizzes[index].answer.every(
+				(word, i) => word.toLowerCase() === flattenedWords[i]
+			);
 		console.log('result : ', result);
 
 		return result;
 	}
 
-	function onCheckPress(e: any): void {
+	async function onCheckPress(e: any): Promise<void> {
 		const isCorrect = checkAnswer();
+		// const sound = isCorrect ? sounds.correct : sounds.incorrect;
 
+		// if (sound) {
+		// 	await sound.replayAsync();
+		// }
 		setIsCorrect(isCorrect);
-
 		isResultSheetOpen.value = true;
 	}
 
 	function onContinuePress(): void {
+		translateX.value = 1000; //Sliding animation for the next quiz
+		translateX.value = withTiming(0, { duration: 500 });
 		if (index < quizzes.length - 1) {
-			translateX.value = 1000; //Sliding animation for the next quiz
-			translateX.value = withTiming(0, { duration: 500 });
 			setIndex((prev) => prev + 1);
-			setRowsData([]);
-			setChoiceBank(
-				quizzes[index].choiceBank.map((word) => ({
-					selected: false,
-					displayText: word,
-					id: nanoid(),
-					buttonWidth: 0,
-				}))
-			);
-			isResultSheetOpen.value = false;
+		} else {
+			setIndex(0);
 		}
+		isResultSheetOpen.value = false;
 	}
 
 	return (
@@ -392,7 +419,8 @@ function QuizScreen() {
 						isCorrect ? 'text-owl-green' : 'text-cardinal'
 					)}
 				>
-					Meaning: Yes, Canada is great!{' '}
+					{isCorrect && 'Meaning: '}
+					{quizzes[index].answerString}
 				</AppText>
 				<Pressable
 					className={twMerge(

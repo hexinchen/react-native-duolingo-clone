@@ -15,6 +15,7 @@ export const quizzes: Quiz[] = [
 			{ isWord: false, display: '?' },
 		],
 		answer: ['Hello', 'do', 'you', 'come', 'from', 'France'],
+		answerString: 'Hello, do you come from France?',
 		choiceBank: [
 			'the',
 			'from',
@@ -36,6 +37,7 @@ export const quizzes: Quiz[] = [
 			{ isWord: false, display: '.' },
 		],
 		answer: ['hello', 'Julia'],
+		answerString: 'Hello, Julia.',
 		choiceBank: ['coffee', 'Hello', 'beer', 'water', 'Julia', 'please'],
 	},
 ];
