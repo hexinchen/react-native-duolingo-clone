@@ -209,6 +209,7 @@ function QuizScreen() {
 				console.log('new data list: ', newRowsData);
 			}
 			setRowsData([...newRowsData]);
+			Haptics.selectionAsync();
 		}
 	}
 
@@ -232,6 +233,7 @@ function QuizScreen() {
 			currentData[insertRowIndex].words.push(selectedWord);
 			currentData[insertRowIndex].remainingWidth -= selectedWord.buttonWidth;
 			setRowsData([...currentData]);
+			Haptics.selectionAsync();
 		}
 	}
 
