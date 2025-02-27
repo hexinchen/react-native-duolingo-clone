@@ -1,25 +1,14 @@
 import {
 	View,
-	Text,
 	Pressable,
 	StyleSheet,
 	Platform,
-	TextLayoutEventData,
-	NativeSyntheticEvent,
 	LayoutChangeEvent,
 	Dimensions,
 	ScaledSize,
 	FlatList,
-	LayoutAnimation,
-	Button,
 } from 'react-native';
-import React, {
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import React, { useEffect, useState } from 'react';
 import CloseIcon from '@/assets/icons/close.svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Router, useRouter } from 'expo-router';
@@ -29,27 +18,22 @@ import { Colors } from '@/constants/Colors';
 import 'react-native-get-random-values';
 import { nanoid } from 'nanoid';
 import { twMerge } from 'tailwind-merge';
-import { Layout } from '@lottiefiles/dotlottie-react';
+
 import { useFonts } from 'expo-font';
-import { debounce, List } from 'lodash';
+import { debounce } from 'lodash';
 import { remToPx } from '@/utils/utils';
-import { QuestionSegment, Word, Row } from '@/interfaces/quiz';
+import { Word, Row } from '@/interfaces/quiz';
 import { quizzes } from '@/data/quizData';
 import Animated, {
-	Easing,
-	FadeIn,
-	FadeOut,
-	LinearTransition,
-	SlideOutDown,
 	useAnimatedStyle,
 	useSharedValue,
-	withSpring,
 	withTiming,
 } from 'react-native-reanimated';
 import { BottomSheet } from '@/components/BottomSheet';
-import { Audio } from 'expo-av';
+
 import useSoundManager from '@/hooks/useSoundManager';
 import useWindowSizeChange from '@/hooks/useWindowSizeChange';
+import * as Haptics from 'expo-haptics';
 
 function QuizScreen() {
 	const { sounds, playSound } = useSoundManager();
@@ -296,6 +280,7 @@ function QuizScreen() {
 		if (sound) {
 			await sound.replayAsync();
 		}
+		Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 		setIsCorrect(isCorrect);
 		isResultSheetOpen.value = true;
 	}
