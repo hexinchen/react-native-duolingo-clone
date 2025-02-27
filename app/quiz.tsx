@@ -97,20 +97,33 @@ function QuizScreen() {
 		setRowCount(window.width < 390 ? 3 : window.width < 598 ? 2 : 1);
 	}, 700);
 
-	async function loadSounds() {
-		const soundFiles = {
-			correct: require('@/assets/sounds/correct.mp3'),
-			incorrect: require('@/assets/sounds/incorrect.mp3'),
+	useEffect(() => {
+		const loadSounds = async () => {
+			const soundFiles = {
+				correct: require('@/assets/sounds/correct.mp3'),
+				incorrect: require('@/assets/sounds/incorrect.mp3'),
+			};
+
+			const loadedSounds = {};
+
+			for (const [key, soundFile] of Object.entries(soundFiles)) {
+				const { sound } = await Audio.Sound.createAsync(soundFile);
+				loadedSounds[key] = sound;
+			}
+
+			setSounds(loadedSounds);
 		};
-		const loadedSounds: { [key: string]: Audio.Sound } = {};
 
-		for (const [key, soundFile] of Object.entries(soundFiles)) {
-			const { sound } = await Audio.Sound.createAsync(soundFile);
-			loadedSounds[key] = sound;
-		}
+		// Call the async function inside useEffect
+		loadSounds();
 
-		setSounds(loadedSounds);
-	}
+		// Clean up and unload sounds when the component unmounts
+		return () => {
+			Object.values(sounds).forEach((sound) => {
+				sound.unloadAsync();
+			});
+		};
+	}, []);
 
 	useEffect(() => {
 		const handleWindowSizeChange = ({ window }: { window: ScaledSize }) => {
@@ -150,8 +163,6 @@ function QuizScreen() {
 		);
 		setIsCorrect(false);
 	}, [rowCount, index]);
-
-	// loadSounds();
 
 	const questionElement: React.JSX.Element[] = quizzes[index].question.map(
 		(word) => (
@@ -319,11 +330,11 @@ function QuizScreen() {
 
 	async function onCheckPress(e: any): Promise<void> {
 		const isCorrect = checkAnswer();
-		// const sound = isCorrect ? sounds.correct : sounds.incorrect;
+		const sound = isCorrect ? sounds.correct : sounds.incorrect;
 
-		// if (sound) {
-		// 	await sound.replayAsync();
-		// }
+		if (sound) {
+			await sound.replayAsync();
+		}
 		setIsCorrect(isCorrect);
 		isResultSheetOpen.value = true;
 	}
