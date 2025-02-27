@@ -48,9 +48,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Audio } from 'expo-av';
+import useSoundManager from '@/hooks/useSoundManager';
+import useWindowSizeChange from '@/hooks/useWindowSizeChange';
 
 function QuizScreen() {
-	const [sounds, setSounds] = useState<{ [key: string]: Audio.Sound }>({});
+	const { sounds, playSound } = useSoundManager();
 	const [loaded, error] = useFonts({
 		'DINRoundPro-Light': require('@/assets/fonts/din-round-light.ttf'),
 	});
@@ -89,6 +91,7 @@ function QuizScreen() {
 	);
 
 	const debouncedHandleWindowChange = debounce((window: ScaledSize) => {
+		console.log('window size changed!');
 		setSingleDividerWidth(
 			Platform.OS === 'web'
 				? Dimensions.get('window').width
@@ -97,49 +100,7 @@ function QuizScreen() {
 		setRowCount(window.width < 390 ? 3 : window.width < 598 ? 2 : 1);
 	}, 700);
 
-	useEffect(() => {
-		const loadSounds = async () => {
-			const soundFiles = {
-				correct: require('@/assets/sounds/correct.mp3'),
-				incorrect: require('@/assets/sounds/incorrect.mp3'),
-			};
-
-			const loadedSounds = {};
-
-			for (const [key, soundFile] of Object.entries(soundFiles)) {
-				const { sound } = await Audio.Sound.createAsync(soundFile);
-				loadedSounds[key] = sound;
-			}
-
-			setSounds(loadedSounds);
-		};
-
-		// Call the async function inside useEffect
-		loadSounds();
-
-		// Clean up and unload sounds when the component unmounts
-		return () => {
-			Object.values(sounds).forEach((sound) => {
-				sound.unloadAsync();
-			});
-		};
-	}, []);
-
-	useEffect(() => {
-		const handleWindowSizeChange = ({ window }: { window: ScaledSize }) => {
-			debouncedHandleWindowChange(window);
-		};
-
-		const subscription = Dimensions.addEventListener(
-			'change',
-			handleWindowSizeChange
-		);
-
-		return () => {
-			subscription?.remove();
-			debouncedHandleWindowChange.cancel(); // Cancel any pending debounced calls on cleanup
-		};
-	}, []);
+	useWindowSizeChange(debouncedHandleWindowChange);
 
 	useEffect(() => {
 		console.log('index: ', index);
