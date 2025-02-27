@@ -8,7 +8,7 @@ import {
 	ScaledSize,
 	FlatList,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CloseIcon from '@/assets/icons/close.svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Router, useRouter } from 'expo-router';
@@ -37,6 +37,7 @@ import * as Haptics from 'expo-haptics';
 
 function QuizScreen() {
 	const { sounds, playSound } = useSoundManager();
+	const animation = useRef<LottieView>(null);
 	const [loaded, error] = useFonts({
 		'DINRoundPro-Light': require('@/assets/fonts/din-round-light.ttf'),
 	});
@@ -107,6 +108,8 @@ function QuizScreen() {
 			}))
 		);
 		setIsCorrect(false);
+		animation.current?.reset();
+		animation.current?.play();
 	}, [rowCount, index]);
 
 	const questionElement: React.JSX.Element[] = quizzes[index].question.map(
@@ -322,6 +325,7 @@ function QuizScreen() {
 					>
 						<LottieView
 							autoPlay
+							ref={animation}
 							loop={false}
 							style={{
 								width: 32,
